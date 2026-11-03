@@ -262,7 +262,7 @@ function BracketTable({
 export function BracketEditor() {
   const { settings, setSettings, resetEpoch } = useSettings();
   const [error, setError] = useState('');
-  const [newYear, setNewYear] = useState(String(settings.year + 1));
+  const [newYear, setNewYear] = useState(String(settings.year));
   const [newStatus, setNewStatus] = useState<FilingStatus>(settings.filingStatus === 'single' ? 'mfj' : 'single');
   const tables = [...settings.bracketSets].sort((a, b) => a.year - b.year || a.filingStatus.localeCompare(b.filingStatus));
 
@@ -270,6 +270,10 @@ export function BracketEditor() {
     const year = Number(newYear);
     if (!Number.isInteger(year) || year < 2000 || year > 2100) {
       setError('Enter a year between 2000 and 2100.');
+      return;
+    }
+    if (year === 2025 || year === 2027 || newStatus === 'mfs') {
+      setError('Use the 2026 Single, Married filing jointly, or Heads of Households table.');
       return;
     }
     if (findBracketSet(settings, year, newStatus)) {
@@ -331,7 +335,7 @@ export function BracketEditor() {
             <SelectMenu<FilingStatus>
               id="new-status"
               value={newStatus}
-              options={(['single', 'mfj', 'mfs', 'hoh'] as const).map((status) => ({
+              options={(['single', 'mfj', 'hoh'] as const).map((status) => ({
                 value: status,
                 label: filingStatusLabel(status),
               }))}

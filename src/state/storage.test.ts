@@ -53,28 +53,35 @@ describe('storage', () => {
     expect(loaded.bracketSets.some((set) => set.filingStatus === 'hoh' && set.standardDeduction === 24_150)).toBe(true);
   });
 
-  it('keeps an edited 2025 table and adds the missing 2026 tables', () => {
+  it('drops 2025 and 2027 tables and the 2026 married filing separately table', () => {
     const single = SINGLE_2025.map((bracket) => ({ ...bracket }));
     single[0] = { upTo: single[0]!.upTo, rate: 0.11 };
     localStorage.setItem(
       SETTINGS_KEY,
       JSON.stringify({
-        year: 2025,
+        year: 2026,
         filingStatus: 'single',
         lcdMultiplier: 4,
         charityCapPct: 0.3,
         quartersPerYear: 4,
-        defaultStandardDeduction: 18_000,
+        defaultStandardDeduction: 16_100,
         bracketSets: [
-          { year: 2025, filingStatus: 'single', brackets: single },
+          { year: 2026, filingStatus: 'single', brackets: single },
           { year: 2025, filingStatus: 'mfj', brackets: MFJ_2025 },
+          { year: 2027, filingStatus: 'single', brackets: single },
+          { year: 2026, filingStatus: 'mfs', brackets: single },
         ],
       }),
     );
     const loaded = loadSettings();
-    expect(loaded.year).toBe(2025);
-    expect(loaded.bracketSets.find((set) => set.year === 2025 && set.filingStatus === 'single')?.brackets[0]?.rate).toBe(0.11);
-    expect(loaded.bracketSets.filter((set) => set.year === 2026)).toHaveLength(4);
+    expect(loaded.year).toBe(2026);
+    expect(loaded.filingStatus).toBe('single');
+    expect(loaded.bracketSets.some((set) => set.year === 2025 || set.year === 2027 || set.filingStatus === 'mfs')).toBe(false);
+    expect(loaded.bracketSets.filter((set) => set.year === 2026).map((set) => set.filingStatus).sort()).toEqual([
+      'hoh',
+      'mfj',
+      'single',
+    ]);
   });
 
   it('round-trips valid settings', () => {

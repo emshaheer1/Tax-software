@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { Button } from '../components/Button.tsx';
 import { cn } from '../components/cn.ts';
 import { activeBrackets, filingStatusLabel, type FilingStatus, type Settings } from '../engine/brackets.ts';
@@ -194,45 +194,45 @@ export function WorkflowPage() {
     },
   ];
 
+  const client = current.clientName.trim();
+
   return (
     <div className="mx-auto w-full max-w-[1400px] space-y-4 px-4 py-4 sm:px-5">
-      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-white/12 pb-3">
+      <header className="flex flex-wrap items-end justify-between gap-3 border-b border-white/12 pb-3">
         <div>
-          <h1 className="text-lg">Workflow</h1>
-          <p className="mt-1 max-w-xl text-sm leading-relaxed text-ink-muted">
-            {current.clientName.trim()
-              ? `${current.clientName.trim()}'s plan, with the formula beside each result.`
-              : 'The open plan, with the formula beside each result.'}
+          <p className="live-line">
+            <span className="live-dot" aria-hidden="true" />
+            <span className="live-word">Live</span>
+            <span className="live-msg">Live results generated from Engine</span>
+          </p>
+          <h1 className="mt-1 text-lg">Workflow</h1>
+          <p className="mt-1 max-w-xl text-xs leading-relaxed text-ink-muted">
+            {client ? `${client}'s plan, mapped from the planner fields.` : 'The open plan, mapped from the planner fields.'}{' '}
+            {settings.year} · {status} · {optionName}
           </p>
         </div>
-        <a href="#/planner" className="text-sm font-medium text-[#7dcea8] hover:underline">
-          Back to the planner
+        <a
+          href="#/planner"
+          className="inline-flex h-8 items-center rounded-md border border-white/15 px-3 text-[13px] font-medium text-[#f6f1e6] transition-colors hover:border-white/30 hover:bg-white/8"
+        >
+          Open planner
         </a>
-      </div>
+      </header>
 
       {ready ? null : (
-        <p className="rounded-xl border border-[#e6c27a]/40 bg-[#e6c27a]/10 px-3 py-2 text-sm text-[#e6c27a]">
+        <p className="mt-4 rounded-xl border border-[#e6c27a]/40 bg-[#e6c27a]/10 px-3 py-2 text-sm text-[#e6c27a]">
           Enter an AGI on the Planner. The sheet stays in place and fills in as soon as that number is there.
         </p>
       )}
 
-      <section aria-label="Result summary" className="space-y-3">
-        <h2 className="text-base">Results</h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Summary label="Now federal tax" value={money(nowTax)} note={`On ${money(nowTaxable)} taxable`} />
-          <Summary label="Option federal tax" value={money(optionTax)} note={optionName} />
-          <Summary label="Tax saved" value={money(taxSaved)} note={`${money(nowTax)} − ${money(optionTax)}`} />
-          <Summary
-            label="Net"
-            value={money(net)}
-            note={cashOut > 0 ? `ROI ${formatPercent(resolved?.roi)}` : 'Cash out is zero'}
-          />
-        </div>
-      </section>
-
-      <section aria-label="Calculation" className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-base">How each result is calculated</h2>
+      <section aria-label="Planner map" className="space-y-3">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="text-sm">Planner map</h2>
+            <p className="mt-1 max-w-xl text-xs leading-relaxed text-ink-muted">
+              Each arrow is one planner field feeding the next figure.
+            </p>
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             {current.options.map((option) => {
               const selected = option.id === selectedId;
@@ -247,33 +247,36 @@ export function WorkflowPage() {
                 </Button>
               );
             })}
-            <Button variant="secondary" onClick={() => setPlay((value) => value + 1)}>
-              Play again
+            <Button variant="ghost" onClick={() => setPlay((value) => value + 1)}>
+              Replay
             </Button>
           </div>
         </div>
-        <Story key={`${selectedId ?? 'none'}-${play}`} steps={steps} />
+        <FlowMap key={`${selectedId ?? 'none'}-${play}`} steps={steps} />
       </section>
 
       <section aria-label="Bracket math" className="space-y-3">
-        <h2 className="text-base">Bracket math</h2>
-        <div className="grid items-stretch gap-3 lg:grid-cols-2">
-        <SliceCard
-          title="Now tax, slice by slice"
-          income={nowTaxable}
-          total={nowTax}
-          slices={nowSlices}
-          year={settings.year}
-          status={status}
-        />
-        <SliceCard
-          title="Option tax, slice by slice"
-          income={optionTaxable}
-          total={optionTax}
-          slices={optionSlices}
-          year={settings.year}
-          status={status}
-        />
+        <h2 className="text-sm">Bracket math</h2>
+        <p className="mt-1 max-w-xl text-xs leading-relaxed text-ink-muted">
+          Taxable income split across the {settings.year} {status} table. Each slice times its rate, then added.
+        </p>
+        <div className="mt-4 grid items-stretch gap-4 lg:grid-cols-2">
+          <SliceCard
+            title="Now tax, slice by slice"
+            income={nowTaxable}
+            total={nowTax}
+            slices={nowSlices}
+            year={settings.year}
+            status={status}
+          />
+          <SliceCard
+            title="Option tax, slice by slice"
+            income={optionTaxable}
+            total={optionTax}
+            slices={optionSlices}
+            year={settings.year}
+            status={status}
+          />
         </div>
       </section>
     </div>
@@ -288,50 +291,283 @@ type StoryStep = {
   value: string;
 };
 
-function Story({ steps }: { steps: StoryStep[] }) {
-  return (
-    <ol className="story-grid grid list-none grid-cols-1 gap-x-14 gap-y-12 p-0 sm:grid-cols-2 xl:grid-cols-4">
-      {steps.map((step, index) => (
-        <li key={step.id} className="story-cell relative h-[220px]">
-          <article
-            className="story-card glass flex h-[220px] flex-col rounded-xl p-4"
-            style={{ animationDelay: `${index * 0.42}s` }}
-          >
-            <p className="text-sm font-medium text-ink-muted">{step.kicker}</p>
-            <h3 className="mt-1.5 text-base leading-snug">{step.title}</h3>
-            <p className="mt-2 text-sm leading-relaxed text-ink-muted">{step.detail}</p>
-            <p className="mt-auto pt-4 text-xl leading-none font-semibold text-[#7dcea8] tabular-nums">
-              {step.value}
-            </p>
-          </article>
-          <span className="story-arrow story-arrow-right" style={{ animationDelay: `${index * 0.42 + 0.24}s` }} aria-hidden>
-            <FlowArrow />
-          </span>
-          <span className="story-arrow story-arrow-down" style={{ animationDelay: `${index * 0.42 + 0.24}s` }} aria-hidden>
-            <FlowArrow />
-          </span>
-        </li>
-      ))}
-    </ol>
-  );
-}
+const mapPlace: Record<string, { col: number; row: number }> = {
+  agi: { col: 1, row: 1 },
+  standard: { col: 1, row: 2 },
+  qbi: { col: 1, row: 3 },
+  donation: { col: 1, row: 4 },
+  gas: { col: 1, row: 5 },
+  fees: { col: 1, row: 6 },
+  'now-taxable': { col: 2, row: 2 },
+  'write-off': { col: 2, row: 3 },
+  deduction: { col: 2, row: 4 },
+  cash: { col: 2, row: 5 },
+  'now-tax': { col: 3, row: 2 },
+  'option-taxable': { col: 3, row: 3 },
+  'option-tax': { col: 3, row: 4 },
+  saved: { col: 4, row: 2 },
+  net: { col: 4, row: 4 },
+  roi: { col: 4, row: 5 },
+};
 
-function FlowArrow() {
-  return (
-    <svg width="28" height="16" viewBox="0 0 28 16" fill="none">
-      <path d="M1 8h19" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M16 3.5 22.5 8 16 12.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
+const mapEdges: Array<{ from: string; to: string; label: string }> = [
+  { from: 'agi', to: 'now-taxable', label: 'starts' },
+  { from: 'standard', to: 'now-taxable', label: 'minus' },
+  { from: 'qbi', to: 'now-taxable', label: 'minus' },
+  { from: 'now-taxable', to: 'now-tax', label: 'brackets' },
+  { from: 'donation', to: 'write-off', label: '× 5' },
+  { from: 'write-off', to: 'deduction', label: 'compare' },
+  { from: 'standard', to: 'deduction', label: 'or this' },
+  { from: 'agi', to: 'option-taxable', label: 'starts' },
+  { from: 'qbi', to: 'option-taxable', label: 'minus' },
+  { from: 'deduction', to: 'option-taxable', label: 'minus' },
+  { from: 'gas', to: 'option-taxable', label: 'minus' },
+  { from: 'option-taxable', to: 'option-tax', label: 'brackets' },
+  { from: 'now-tax', to: 'saved', label: 'now tax' },
+  { from: 'option-tax', to: 'saved', label: 'minus' },
+  { from: 'donation', to: 'cash', label: 'plus' },
+  { from: 'gas', to: 'cash', label: 'plus' },
+  { from: 'saved', to: 'net', label: 'saved' },
+  { from: 'cash', to: 'net', label: 'minus' },
+  { from: 'fees', to: 'net', label: 'minus' },
+  { from: 'net', to: 'roi', label: 'net' },
+  { from: 'cash', to: 'roi', label: '÷ cash' },
+];
 
-function Summary({ label, value, note }: { label: string; value: string; note: string }) {
+const mapLanes = ['Planner', 'Figures', 'Tax', 'Outcome'];
+
+type MapLine = { d: string; from: string; to: string; label: string; lx: number; ly: number; delay: number };
+
+function FlowMap({ steps }: { steps: StoryStep[] }) {
+  const boardRef = useRef<HTMLDivElement>(null);
+  const [lines, setLines] = useState<MapLine[]>([]);
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  const [active, setActive] = useState<string | null>(null);
+
+  useLayoutEffect(() => {
+    const board = boardRef.current;
+    if (!board) return;
+    const draw = () => {
+      const rect = board.getBoundingClientRect();
+      const boxOf = (id: string) => {
+        const node = board.querySelector<HTMLElement>(`[data-node="${id}"]`);
+        if (!node) return null;
+        const bounds = node.getBoundingClientRect();
+        return {
+          left: bounds.left - rect.left,
+          right: bounds.right - rect.left,
+          top: bounds.top - rect.top,
+          bottom: bounds.bottom - rect.top,
+          height: bounds.height,
+          col: mapPlace[id]?.col ?? 0,
+        };
+      };
+      type Box = NonNullable<ReturnType<typeof boxOf>>;
+      const boxes = Object.keys(mapPlace)
+        .map((id) => boxOf(id))
+        .filter((box): box is Box => box != null);
+      type Item = {
+        edge: (typeof mapEdges)[number];
+        index: number;
+        start: Box;
+        end: Box;
+        y1: number;
+        y2: number;
+      };
+      const items: Item[] = [];
+      mapEdges.forEach((edge, index) => {
+        const start = boxOf(edge.from);
+        const end = boxOf(edge.to);
+        if (!start || !end) return;
+        items.push({
+          edge,
+          index,
+          start,
+          end,
+          y1: start.top + start.height / 2,
+          y2: end.top + end.height / 2,
+        });
+      });
+      const fan = (group: Item[], side: 'y1' | 'y2', box: Box) => {
+        const ordered = [...group].sort((a, b) => (side === 'y1' ? a.end.top - b.end.top : a.start.top - b.start.top));
+        ordered.forEach((item, index) => {
+          item[side] = box.top + box.height * ((index + 1) / (ordered.length + 1));
+        });
+      };
+      const outgoing: Map<string, Item[]> = new Map();
+      const incomingLeft: Map<string, Item[]> = new Map();
+      const incomingRight: Map<string, Item[]> = new Map();
+      for (const item of items) {
+        outgoing.set(item.edge.from, [...(outgoing.get(item.edge.from) ?? []), item]);
+        const sameColumn = item.start.col === item.end.col;
+        const bucket = sameColumn ? incomingRight : incomingLeft;
+        bucket.set(item.edge.to, [...(bucket.get(item.edge.to) ?? []), item]);
+      }
+      for (const group of outgoing.values()) fan(group, 'y1', group[0]!.start);
+      for (const group of incomingLeft.values()) fan(group, 'y2', group[0]!.end);
+      for (const group of incomingRight.values()) fan(group, 'y2', group[0]!.end);
+
+      const gutterOf = (afterCol: number) => {
+        const sources = boxes.filter((box) => box.col === afterCol);
+        const targets = boxes.filter((box) => box.col === afterCol + 1);
+        if (sources.length === 0 || targets.length === 0) return null;
+        return {
+          left: Math.max(...sources.map((box) => box.right)) + 12,
+          right: Math.min(...targets.map((box) => box.left)) - 16,
+        };
+      };
+      const neighbors = items.filter((item) => item.end.col === item.start.col + 1);
+      const laneOf: Map<Item, number> = new Map();
+      const byGutter: Map<number, Item[]> = new Map();
+      for (const item of neighbors) byGutter.set(item.start.col, [...(byGutter.get(item.start.col) ?? []), item]);
+      for (const [col, list] of byGutter) {
+        const lanes: Item[][] = [];
+        const ordered = [...list].sort((a, b) => Math.min(a.y1, a.y2) - Math.min(b.y1, b.y2));
+        for (const item of ordered) {
+          const top = Math.min(item.y1, item.y2);
+          const bottom = Math.max(item.y1, item.y2);
+          let lane = lanes.findIndex((placed) =>
+            placed.every((other) => {
+              const otherTop = Math.min(other.y1, other.y2);
+              const otherBottom = Math.max(other.y1, other.y2);
+              return bottom < otherTop - 16 || top > otherBottom + 16;
+            }),
+          );
+          if (lane < 0) {
+            lane = lanes.length;
+            lanes.push([]);
+          }
+          lanes[lane]!.push(item);
+          laneOf.set(item, lane);
+        }
+        byGutter.set(col, list);
+      }
+      const laneCount = (col: number) => {
+        const list = byGutter.get(col) ?? [];
+        return Math.max(...list.map((item) => laneOf.get(item) ?? 0), 0) + (list.length ? 1 : 1);
+      };
+
+      const skips = items
+        .filter((item) => item.end.col > item.start.col + 1)
+        .sort((a, b) => a.y1 - b.y1 || a.y2 - b.y2);
+      const skipLane: Map<Item, number> = new Map();
+      skips.forEach((item, index) => skipLane.set(item, index));
+      const lowest = Math.max(...boxes.map((box) => box.bottom), 0);
+      const busTop = lowest + 36;
+
+      const next: MapLine[] = [];
+      for (const item of items) {
+        const { start, end, y1, y2, edge, index } = item;
+        let d = '';
+        if (start.col === end.col) {
+          const same = items.filter((other) => other.start.col === start.col && other.end.col === end.col);
+          const lane = Math.max(same.indexOf(item), 0);
+          const x = start.left + 22 + lane * 16;
+          d = `M ${x} ${start.bottom} V ${end.top}`;
+        } else if (end.col === start.col + 1) {
+          const lane = laneOf.get(item) ?? 0;
+          const count = laneCount(start.col);
+          const gutter = gutterOf(start.col);
+          const left = gutter?.left ?? start.right + 12;
+          const right = (gutter?.right ?? end.left - 16) - (start.col === 2 ? 56 : 0);
+          const room = Math.max(right - left, 12);
+          const step = count <= 1 ? 0 : Math.min(18, (room - 4) / (count - 1));
+          const mid = left + (room - (count - 1) * step) / 2 + lane * step;
+          d = `M ${start.right + 2} ${y1} H ${mid} V ${y2} H ${end.left - 9}`;
+        } else {
+          const lane = skipLane.get(item) ?? 0;
+          const bus = busTop + lane * 22;
+          const fromLeft = start.col === 1;
+          const leftLane = Math.max(skips.filter((skip) => skip.start.col === 1).indexOf(item), 0);
+          const downLane = Math.max(skips.filter((skip) => skip.start.col === start.col && skip.start.col !== 1).indexOf(item), 0);
+          const riseLane = Math.max(skips.filter((skip) => skip.end.col === end.col).indexOf(item), 0);
+          const drop = fromLeft ? 18 + leftLane * 16 : start.left + 24 + downLane * 16;
+          const rise = end.col === 4
+            ? rect.width - 24 - riseLane * 16
+            : (gutterOf(end.col - 1)?.right ?? end.left - 18) - riseLane * 16;
+          if (fromLeft) {
+            d = `M ${start.left} ${y1} H ${drop} V ${bus} H ${rise} V ${y2} H ${end.col === 4 ? end.right : end.left - 9}`;
+          } else {
+            d = `M ${drop} ${start.bottom} V ${bus} H ${rise} V ${y2} H ${end.col === 4 ? end.right : end.left - 9}`;
+          }
+        }
+        next.push({
+          from: edge.from,
+          to: edge.to,
+          label: edge.label,
+          lx: 0,
+          ly: 0,
+          delay: index * 0.08,
+          d,
+        });
+      }
+      setSize({ width: board.clientWidth, height: board.clientHeight });
+      setLines(next);
+    };
+    draw();
+    const observer = new ResizeObserver(draw);
+    observer.observe(board);
+    return () => observer.disconnect();
+  }, [steps]);
+
   return (
-    <article className="glass flex h-full min-h-[118px] flex-col rounded-xl p-4">
-      <p className="text-sm font-medium text-ink-muted">{label}</p>
-      <p className="mt-3 text-2xl leading-none font-semibold text-[#7dcea8] tabular-nums">{value}</p>
-      <p className="mt-auto pt-3 text-sm leading-relaxed text-ink-muted">{note}</p>
-    </article>
+    <div className="map-scroll">
+      <div ref={boardRef} className="map-board">
+        <svg className="map-lines" width={size.width} height={size.height} aria-hidden="true">
+          <defs>
+            <marker id="map-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+              <path d="M0 0.5 9 5 0 9.5 Z" fill="#d7eee4" />
+            </marker>
+          </defs>
+          {lines.map((line) => {
+            const hot = active != null && (line.from === active || line.to === active);
+            const dim = active != null && !hot;
+            return (
+              <g key={`${line.from}-${line.to}`}>
+                <path
+                  d={line.d}
+                  markerEnd="url(#map-arrow)"
+                  className={cn('map-edge', hot && 'map-edge-hot', dim && 'map-edge-dim')}
+                />
+                <path
+                  d={line.d}
+                  className={cn('map-spark', dim && 'map-spark-dim')}
+                  style={{ animationDelay: `${line.delay}s` }}
+                />
+              </g>
+            );
+          })}
+        </svg>
+        {mapLanes.map((label, index) => (
+          <p key={label} className="map-lane" style={{ gridColumn: index * 2 + 1, gridRow: 1 }}>
+            {label}
+          </p>
+        ))}
+        {steps.map((step) => {
+          const place = mapPlace[step.id];
+          if (!place) return null;
+          const outcome = step.id === 'net' || step.id === 'roi' || step.id === 'saved';
+          return (
+            <article
+              key={step.id}
+              data-node={step.id}
+              className={cn('map-node', outcome && 'map-node-outcome')}
+              style={{ gridColumn: place.col * 2 - 1, gridRow: place.row + 1 }}
+              title={step.detail}
+              onMouseEnter={() => setActive(step.id)}
+              onMouseLeave={() => setActive(null)}
+              onFocus={() => setActive(step.id)}
+              onBlur={() => setActive(null)}
+              tabIndex={0}
+            >
+              <p className="map-node-kicker">{step.kicker}</p>
+              <h3 className="map-node-title">{step.title}</h3>
+              <p className="map-node-value">{step.value}</p>
+            </article>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -351,36 +587,45 @@ function SliceCard({
   status: string;
 }) {
   return (
-    <article className="glass flex h-full flex-col rounded-xl p-4">
-      <h2 className="text-base">{title}</h2>
-      <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">
-        {money(income)} through the {year} {status} brackets. Each slice times its rate, then added.
-      </p>
+    <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-black/25">
+      <header className="px-5 py-4">
+        <h3 className="text-sm font-semibold tracking-tight">{title}</h3>
+        <p className="mt-1.5 text-[13px] leading-relaxed text-ink-muted">
+          {money(income)} through the {year} {status} brackets. Each slice times its rate, then added.
+        </p>
+      </header>
       {slices.length === 0 ? (
-        <p className="mt-3 text-sm text-ink-muted">No taxable income yet, so the tax is {money(0)}.</p>
+        <p className="px-5 pb-4 text-sm text-ink-muted">No taxable income yet, so the tax is {money(0)}.</p>
       ) : (
-        <div className="mt-3">
-          <div className="slice-line slice-line-head">
-            <span>From</span>
-            <span>To</span>
-            <span>Rate</span>
-            <span>Tax</span>
-          </div>
-          {slices.map((slice, index) => {
-            const last = index === slices.length - 1;
-            return (
-              <div key={`${slice.from}-${slice.rate}`} className={cn('slice-line', last && 'slice-line-last')}>
-                <span>{money(slice.from)}</span>
-                <span>{money(slice.to)}</span>
-                <span>{formatPlainPercent(slice.rate)}%</span>
-                <span>{money(slice.tax)}</span>
-              </div>
-            );
-          })}
+        <div className="overflow-x-auto">
+          <table className="wf-table w-full min-w-[420px] border-collapse text-[13px]">
+            <thead>
+              <tr>
+                <th scope="col">From</th>
+                <th scope="col">To</th>
+                <th scope="col">Rate</th>
+                <th scope="col">Tax</th>
+              </tr>
+            </thead>
+            <tbody>
+              {slices.map((slice, index) => {
+                const last = index === slices.length - 1;
+                return (
+                  <tr key={`${slice.from}-${slice.rate}`} className={last ? 'wf-slice-last' : undefined}>
+                    <td>{money(slice.from)}</td>
+                    <td>{money(slice.to)}</td>
+                    <td>{formatPlainPercent(slice.rate)}%</td>
+                    <td>{money(slice.tax)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
-      <p className="mt-auto pt-3 text-base font-semibold">
-        Federal tax <span className="text-[#7dcea8] tabular-nums">{money(total)}</span>
+      <p className="mt-auto flex items-baseline justify-between gap-3 border-t border-white/10 px-5 py-3 text-sm">
+        <span className="text-ink-muted">Federal tax</span>
+        <span className="font-semibold text-[#7dcea8] tabular-nums">{money(total)}</span>
       </p>
     </article>
   );

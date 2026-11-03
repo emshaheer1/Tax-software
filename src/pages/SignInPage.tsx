@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type RefObject } from 'react';
 import { Button } from '../components/Button.tsx';
 import { TextField } from '../components/TextField.tsx';
 import { signIn, type Session } from '../state/session.ts';
@@ -10,6 +10,9 @@ const points = [
   'Plans stay on this computer.',
 ];
 
+const LOADER_MS = 1800;
+const WELCOME_MS = 1600;
+
 export function SignInPage({ onSignedIn }: { onSignedIn: (session: Session) => void }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,6 +20,7 @@ export function SignInPage({ onSignedIn }: { onSignedIn: (session: Session) => v
   const [pending, setPending] = useState(false);
   const [step, setStep] = useState<'form' | 'loading' | 'success'>('form');
   const timers = useRef<number[]>([]);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     return () => {
@@ -24,21 +28,26 @@ export function SignInPage({ onSignedIn }: { onSignedIn: (session: Session) => v
     };
   }, []);
 
+  useEffect(() => {
+    if (step === 'success') dialogRef.current?.focus();
+  }, [step]);
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (step !== 'form') return;
     setPending(true);
     setError('');
+    setStep('loading');
     const result = await signIn(email, password);
     setPending(false);
     if (!result.ok) {
+      setStep('form');
       setError(result.message);
       return;
     }
-    setStep('loading');
     timers.current.push(
-      window.setTimeout(() => setStep('success'), 900),
-      window.setTimeout(() => onSignedIn(result.session), 2400),
+      window.setTimeout(() => setStep('success'), LOADER_MS),
+      window.setTimeout(() => onSignedIn(result.session), LOADER_MS + WELCOME_MS),
     );
   }
 
@@ -107,39 +116,46 @@ export function SignInPage({ onSignedIn }: { onSignedIn: (session: Session) => v
         </section>
       </div>
 
-      {step === 'loading' ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black" role="status" aria-live="polite">
-          <div className="sign-in-spin" />
-          <span className="sr-only">Signing in</span>
-        </div>
-      ) : null}
+      {step === 'loading' ? <TaxLoader /> : null}
+      {step === 'success' ? <WelcomeModal dialogRef={dialogRef} /> : null}
+    </div>
+  );
+}
 
-      {step === 'success' ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black px-4">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="sign-in-success-title"
-            className="w-full max-w-xs rounded-xl border border-white/12 bg-[#0c1012] px-6 py-8 text-center"
-          >
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-[#3d8a86] bg-[#1c3d3e]">
-              <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" aria-hidden="true">
-                <path
-                  d="M5 12.5 9.2 17 19 7"
-                  stroke="#7dcea8"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <h2 id="sign-in-success-title" className="mt-4 text-lg">
-              Signed in
-            </h2>
-            <p className="mt-1 text-sm text-ink-muted">Opening the planner.</p>
-          </div>
-        </div>
-      ) : null}
+function TaxLoader() {
+  return (
+    <div className="sign-in-stage" role="status" aria-live="polite" aria-busy="true">
+      <div className="sign-mark" aria-hidden="true">
+        <span className="sign-orbit" />
+      </div>
+      <div className="sign-in-copy">
+        <p className="sign-in-caption">Preparing your planner</p>
+        <p className="sign-in-caption-sub">Checking the account and lining up the return.</p>
+      </div>
+    </div>
+  );
+}
+
+function WelcomeModal({ dialogRef }: { dialogRef: RefObject<HTMLDivElement | null> }) {
+  return (
+    <div className="sign-in-stage welcome-stage">
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="sign-in-welcome-title"
+        aria-describedby="sign-in-welcome-body"
+        className="welcome-card"
+      >
+        <svg className="welcome-mark" viewBox="0 0 72 72" aria-hidden="true">
+          <circle className="welcome-ring" cx="36" cy="36" r="28" />
+          <path className="welcome-check" d="M23 37.5 32 46.5 50 26" />
+        </svg>
+        <p className="welcome-kicker">Premium Tax Planners</p>
+        <h2 id="sign-in-welcome-title">Welcome</h2>
+        <p id="sign-in-welcome-body">You are signed in. The planner is ready.</p>
+      </div>
     </div>
   );
 }

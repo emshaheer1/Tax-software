@@ -134,7 +134,7 @@ export function workbookSet(filingStatus: FilingStatus, year = WORKBOOK_YEAR): B
 }
 
 export function defaultBracketSets(): BracketSet[] {
-  return (['single', 'mfj', 'mfs', 'hoh'] as const).map((status) => workbookSet(status));
+  return (['single', 'mfj', 'hoh'] as const).map((status) => workbookSet(status));
 }
 
 export function defaultSettings(): Settings {

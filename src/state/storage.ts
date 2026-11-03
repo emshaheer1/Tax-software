@@ -103,16 +103,24 @@ function withWorkbookTables(settings: Settings): Settings {
       quartersPerYear: settings.quartersPerYear,
     };
   }
-  const bracketSets = settings.bracketSets.map((set) => ({
-    ...set,
-    standardDeduction: Number.isFinite(set.standardDeduction) ? set.standardDeduction : builtinStandard(set.filingStatus),
-  }));
-  for (const status of ['single', 'mfj', 'mfs', 'hoh'] as const) {
+  const bracketSets = settings.bracketSets
+    .map((set) => ({
+      ...set,
+      standardDeduction: Number.isFinite(set.standardDeduction) ? set.standardDeduction : builtinStandard(set.filingStatus),
+    }))
+    .filter((set) => set.year !== 2025 && set.year !== 2027 && !(set.year === WORKBOOK_YEAR && set.filingStatus === 'mfs'));
+  for (const status of ['single', 'mfj', 'hoh'] as const) {
     if (!bracketSets.some((set) => set.year === WORKBOOK_YEAR && set.filingStatus === status)) {
       bracketSets.push(workbookSet(status));
     }
   }
-  return { ...settings, bracketSets };
+  const active = bracketSets.some((set) => set.year === settings.year && set.filingStatus === settings.filingStatus);
+  return {
+    ...settings,
+    year: active ? settings.year : WORKBOOK_YEAR,
+    filingStatus: active ? settings.filingStatus : 'single',
+    bracketSets,
+  };
 }
 
 export function isSettings(value: unknown): value is Settings {
