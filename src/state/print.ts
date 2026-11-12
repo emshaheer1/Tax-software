@@ -94,9 +94,24 @@ ${collectStyles()}
     border: 1px solid #d7d2c8 !important;
     background: #ffffff !important;
   }
+  /* Keep page-1 content + disclaimer together, then force chart onto page 2. */
+  .report-sheet .report-page-one {
+    min-height: 273mm;
+    display: flex;
+    flex-direction: column;
+    break-after: page;
+    page-break-after: always;
+  }
+  .report-sheet .report-footer-page1 {
+    margin-top: auto !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    break-before: avoid;
+    page-break-before: avoid;
+  }
   .report-sheet .report-chart-page {
-    break-before: page;
-    page-break-before: always;
+    break-before: auto;
+    page-break-before: auto;
     margin-top: 0 !important;
     padding-top: 8mm !important;
     border-top: 0 !important;
@@ -105,7 +120,7 @@ ${collectStyles()}
     margin-top: 4mm;
     margin-bottom: 16px;
   }
-  .report-sheet .report-chart { width: 100%; min-height: 150mm; }
+  .report-sheet .report-chart { width: 100%; min-height: 140mm; }
   .report-sheet button[aria-label] { display: none !important; }
   .no-print { display: none !important; }
 </style>

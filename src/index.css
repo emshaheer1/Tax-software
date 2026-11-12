@@ -374,9 +374,23 @@ input:-webkit-autofill:focus {
     break-inside: avoid;
   }
 
+  .report-sheet .report-page-one {
+    min-height: 273mm;
+    display: flex;
+    flex-direction: column;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .report-sheet .report-footer-page1 {
+    margin-top: auto !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
   .report-sheet .report-chart-page {
-    break-before: page;
-    page-break-before: always;
+    break-before: auto;
+    page-break-before: auto;
     margin-top: 0;
     padding-top: 0;
     border-top: 0;
