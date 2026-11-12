@@ -352,13 +352,19 @@ input:-webkit-autofill:focus {
   }
 
   .report-sheet table {
-    font-size: 12.5px;
+    font-size: 12px;
   }
 
   .report-sheet table td,
   .report-sheet table th {
-    padding-top: 5px !important;
-    padding-bottom: 5px !important;
+    padding-top: 3.5px !important;
+    padding-bottom: 3.5px !important;
+  }
+
+  .report-sheet table th[colspan] {
+    padding-top: 10px !important;
+    padding-bottom: 3px !important;
+    font-size: 10px !important;
   }
 
   .report-sheet .report-field {
@@ -369,21 +375,22 @@ input:-webkit-autofill:focus {
     color: #0b2545 !important;
   }
 
-  .report-sheet tr,
   .report-sheet .keep {
     break-inside: avoid;
   }
 
+  .report-sheet tr {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
   .report-sheet .report-page-one {
-    min-height: 273mm;
-    display: flex;
-    flex-direction: column;
     break-after: page;
     page-break-after: always;
   }
 
   .report-sheet .report-footer-page1 {
-    margin-top: auto !important;
+    margin-top: 10px !important;
     break-inside: avoid;
     page-break-inside: avoid;
   }

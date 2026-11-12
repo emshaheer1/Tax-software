@@ -84,7 +84,7 @@ ${collectStyles()}
     width: auto !important;
     min-height: 0 !important;
     margin: 0 !important;
-    padding: 12mm !important;
+    padding: 11mm !important;
     border: 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
@@ -93,21 +93,51 @@ ${collectStyles()}
   .report-sheet .keep {
     border: 1px solid #d7d2c8 !important;
     background: #ffffff !important;
+    padding: 12px !important;
   }
-  /* Keep page-1 content + disclaimer together, then force chart onto page 2. */
+  /* Page 1 ends after disclaimer; chart starts on page 2. */
   .report-sheet .report-page-one {
-    min-height: 273mm;
-    display: flex;
-    flex-direction: column;
     break-after: page;
     page-break-after: always;
   }
   .report-sheet .report-footer-page1 {
-    margin-top: auto !important;
+    margin-top: 14px !important;
+    padding-top: 10px !important;
     break-inside: avoid;
     page-break-inside: avoid;
-    break-before: avoid;
-    page-break-before: avoid;
+  }
+  .report-sheet h1.report-heading {
+    font-size: 1.5rem !important;
+    margin-top: 10px !important;
+    margin-bottom: 6px !important;
+  }
+  .report-sheet .report-page-one > p {
+    margin-top: 4px !important;
+    margin-bottom: 0 !important;
+  }
+  .report-sheet .report-page-one > .mt-5,
+  .report-sheet .report-page-one > div.mt-5 {
+    margin-top: 14px !important;
+  }
+  .report-sheet .report-page-one .space-y-5 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 14px !important;
+  }
+  .report-sheet table {
+    font-size: 12px !important;
+  }
+  .report-sheet table th,
+  .report-sheet table td {
+    padding-top: 3.5px !important;
+    padding-bottom: 3.5px !important;
+  }
+  .report-sheet table th[colspan] {
+    padding-top: 10px !important;
+    padding-bottom: 3px !important;
+    font-size: 10px !important;
+  }
+  .report-sheet tr {
+    break-inside: auto;
+    page-break-inside: auto;
   }
   .report-sheet .report-chart-page {
     break-before: auto;
