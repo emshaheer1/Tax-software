@@ -4,8 +4,7 @@ import { Button } from '../components/Button.tsx';
 import { ComparisonTable } from '../components/ComparisonTable.tsx';
 import { ResultCards } from '../components/ResultCards.tsx';
 import { SavingsChart } from '../components/SavingsChart.tsx';
-import { useToast } from '../components/Toast.tsx';
-import { BRACKET_DISCLAIMER, filingStatusLabel } from '../engine/brackets.ts';
+import { filingStatusLabel } from '../engine/brackets.ts';
 import { clientStatusLabel } from '../engine/plan.ts';
 import { formatDate, formatMoney } from '../engine/format.ts';
 import { DISCLAIMER, calculatePlan, displayName } from '../engine/plan.ts';
@@ -14,14 +13,14 @@ import { usePlans } from '../state/plans-context.tsx';
 import { useSettings } from '../state/settings-context.tsx';
 
 export function ReportPage({ printing = false }: { printing?: boolean }) {
-  const toast = useToast();
-
   useEffect(() => {
     if (printing) return;
     schedulePrintFromStorage();
     const onPrint = () => schedulePrintFromStorage();
     window.addEventListener('ptc-print', onPrint);
-    return () => window.removeEventListener('ptc-print', onPrint);
+    return () => {
+      window.removeEventListener('ptc-print', onPrint);
+    };
   }, [printing]);
 
   return (
@@ -32,13 +31,7 @@ export function ReportPage({ printing = false }: { printing?: boolean }) {
             Back to planner
           </a>
           <div className="flex flex-wrap gap-2">
-            <Button
-              variant="secondary"
-              onClick={() => {
-                toast('Choose Save as PDF in the print dialog.');
-                requestPrint();
-              }}
-            >
+            <Button variant="secondary" onClick={() => requestPrint()}>
               <Download size={16} aria-hidden="true" />
               Download PDF
             </Button>
@@ -78,44 +71,54 @@ export function ReportDocument() {
         </p>
       </header>
 
-      <h1 className="mt-3 text-xl">Tax Planning Summary</h1>
+      <h1 className="report-heading mt-3 text-xl font-semibold">Tax Planning Summary</h1>
       <p className="mt-1 text-sm text-ink">
         {displayName(current)}
         <span aria-hidden="true"> · </span>
         {formatDate(current.date)}
       </p>
       <p className="mt-2 text-xs text-ink-muted">
-        AGI {formatMoney(current.agi)} · Standard / other deductions {formatMoney(current.standardDeduction)} · QBI{' '}
-        {formatMoney(current.qbi)}
+        <span className="report-field">AGI</span> {formatMoney(current.agi)}
+        <span aria-hidden="true"> · </span>
+        <span className="report-field">Standard / other deductions</span> {formatMoney(current.standardDeduction)}
+        <span aria-hidden="true"> · </span>
+        <span className="report-field">QBI</span> {formatMoney(current.qbi)}
       </p>
 
       {result ? (
-        <div className="mt-3 space-y-3">
-          <ResultCards
-            options={result.options}
-            bestOptionId={result.bestOptionId}
-            planningFees={current.planningFees}
-            compact
-          />
-          <ComparisonTable plan={current} result={result} settings={settings} scroll={false} compact />
-          {result.options.length > 0 ? <SavingsChart options={result.options} height={118} compact /> : null}
-          {result.warnings.length > 0 ? (
-            <ul className="text-[11px] leading-relaxed text-warning">
-              {result.warnings.map((warning) => (
-                <li key={warning}>{warning}</li>
-              ))}
-            </ul>
+        <>
+          <div className="mt-5 space-y-5">
+            <ResultCards
+              options={result.options}
+              bestOptionId={result.bestOptionId}
+              planningFees={current.planningFees}
+              paper
+            />
+            <ComparisonTable plan={current} result={result} settings={settings} scroll={false} />
+            {result.warnings.length > 0 ? (
+              <ul className="text-sm leading-relaxed text-warning">
+                {result.warnings.map((warning) => (
+                  <li key={warning}>{warning}</li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+          {result.options.length > 0 ? (
+            <section className="report-chart-page" aria-label="Tax saved and cash out">
+              <h2 className="report-heading font-semibold">Tax saved and cash out</h2>
+              <p className="mt-1 text-sm text-ink-muted">Each option’s tax saved next to cash out.</p>
+              <div className="report-chart mt-4">
+                <SavingsChart options={result.options} height={460} paper />
+              </div>
+            </section>
           ) : null}
-        </div>
+        </>
       ) : (
         <p className="mt-6 text-sm text-ink-muted">Enter the client’s AGI on the Planner to build this summary.</p>
       )}
 
-      <footer className="mt-4 border-t border-line pt-3 text-[10px] leading-relaxed text-ink-muted">
+      <footer className="report-footer mt-8 border-t border-line pt-4 text-ink-muted">
         <p>{DISCLAIMER}</p>
-        <p className="mt-1">
-          {`Prepared with tax year ${settings.year}, ${current.clientStatus ? clientStatusLabel(current.clientStatus) : filingStatusLabel(settings.filingStatus)}. ${BRACKET_DISCLAIMER}.`}
-        </p>
       </footer>
     </article>
   );

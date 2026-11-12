@@ -89,31 +89,38 @@ export function SavingsChart({
     .map((row) => `${row.name}: tax saved ${formatMoney(row.taxSaved)}, cash out ${formatMoney(row.cashOut)}, net ${formatMoney(row.net)}`)
     .join('. ');
 
+  const roomy = paper && !compact;
+
   return (
     <div role="img" aria-label={`Tax saved compared with cash out. ${summary}`}>
       <div aria-hidden="true" style={{ height }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={rows}
-            margin={{ top: 4, right: 8, left: 0, bottom: compact ? 4 : 20 }}
-            barGap={4}
-            barCategoryGap="28%"
+            margin={{
+              top: roomy ? 16 : 4,
+              right: roomy ? 16 : 8,
+              left: roomy ? 8 : 0,
+              bottom: roomy ? 28 : compact ? 4 : 20,
+            }}
+            barGap={roomy ? 10 : 4}
+            barCategoryGap={roomy ? '22%' : '28%'}
           >
-            <CartesianGrid vertical={false} stroke={ink.grid} />
+            <CartesianGrid vertical={false} stroke={ink.grid} strokeDasharray={roomy ? '3 6' : undefined} />
             <XAxis
               dataKey="id"
               interval={0}
               tickLine={false}
               axisLine={{ stroke: ink.grid }}
-              height={compact ? 46 : 52}
+              height={roomy ? 58 : compact ? 46 : 52}
               tick={(props: XAxisTickContentProps) => <NetTick {...props} rows={rows} compact={onPaper} />}
             />
             <YAxis
               tickFormatter={(value: number) => formatMoney(value)}
-              width={84}
+              width={roomy ? 96 : 84}
               tickLine={false}
               axisLine={false}
-              tick={{ fill: ink.muted, fontSize: 12 }}
+              tick={{ fill: ink.muted, fontSize: roomy ? 13 : 12 }}
             />
             <Tooltip
               cursor={{ fill: onPaper ? 'rgba(11, 37, 69, 0.04)' : 'rgba(255,255,255,0.04)' }}
@@ -131,14 +138,25 @@ export function SavingsChart({
                 fontSize: 12,
               }}
             />
-            <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8, color: ink.label }} />
-            <Bar dataKey="taxSaved" name="Tax saved" fill={SAVED} radius={[3, 3, 0, 0]} isAnimationActive={false} />
+            <Legend
+              wrapperStyle={{ fontSize: roomy ? 13 : 12, paddingTop: roomy ? 16 : 8, color: ink.label }}
+              iconType="square"
+            />
+            <Bar
+              dataKey="taxSaved"
+              name="Tax saved"
+              fill={SAVED}
+              radius={[4, 4, 0, 0]}
+              maxBarSize={roomy ? 64 : undefined}
+              isAnimationActive={false}
+            />
             <Bar
               dataKey="cashOut"
               name="Cash out"
               fill={CASH}
               stroke={CASH_STROKE}
-              radius={[3, 3, 0, 0]}
+              radius={[4, 4, 0, 0]}
+              maxBarSize={roomy ? 64 : undefined}
               isAnimationActive={false}
             />
           </BarChart>

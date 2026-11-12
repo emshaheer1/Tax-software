@@ -70,16 +70,18 @@ export function PlansProvider({ children }: { children: ReactNode }) {
   const addOption = useCallback(() => {
     setCurrent((plan) => {
       if (plan.options.length >= 3) return plan;
+      const hasFifty = plan.options.some((option) => option.writeOffRate === 0.5);
+      const rate = hasFifty ? 0.3 : 0.5;
       return touch({
         ...plan,
         options: [
           ...plan.options,
           {
             id: crypto.randomUUID(),
-            name: 'LCD (30)%',
+            name: rate === 0.5 ? 'LCD (50)%' : 'LCD (30)%',
             lcd: 0,
             gasOil: 0,
-            writeOffRate: 0.3,
+            writeOffRate: rate,
           },
         ],
       });

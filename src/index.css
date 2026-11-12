@@ -233,10 +233,69 @@ input:-webkit-autofill:focus {
   --warning: #8a5a00;
   --warning-bg: #fff4db;
   --teal-600: #0f8b8d;
+  --report-heading: #0b2545;
   width: min(210mm, 100%);
   background: white;
   color: var(--ink);
   color-scheme: light;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.report-sheet .report-heading {
+  color: var(--report-heading);
+}
+
+.report-sheet .report-field {
+  font-weight: 700;
+}
+
+.report-sheet h1.report-heading {
+  font-size: 1.75rem;
+  letter-spacing: -0.02em;
+}
+
+.report-sheet h2.report-heading {
+  font-size: 1.25rem;
+}
+
+.report-sheet table {
+  font-size: 13px;
+}
+
+.report-sheet table th,
+.report-sheet table td {
+  padding-top: 0.45rem !important;
+  padding-bottom: 0.45rem !important;
+}
+
+.report-sheet .report-chart-page {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.report-sheet .report-chart {
+  width: 100%;
+  min-height: 420px;
+}
+
+.report-sheet .report-footer {
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.report-sheet .keep {
+  border: 1px solid #d7d2c8 !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.report-sheet .keep.border-\[\#0f8b8d\],
+.report-sheet .keep[class*='border-[#0f8b8d]'] {
+  border-color: #0f8b8d !important;
 }
 
 @media screen {
@@ -250,41 +309,86 @@ input:-webkit-autofill:focus {
 
 @page {
   size: A4 portrait;
-  margin: 16mm;
+  margin: 14mm;
 }
 
 @media print {
   html,
   body,
-  #root {
-    background: white !important;
+  #root,
+  #root > div,
+  main {
+    background: #ffffff !important;
     color-scheme: light;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    box-shadow: none !important;
   }
 
   .no-print {
     display: none !important;
   }
 
+  body * {
+    visibility: hidden;
+  }
+
+  .report-sheet,
+  .report-sheet * {
+    visibility: visible;
+  }
+
   .report-sheet {
-    width: auto;
-    min-height: 0;
-    padding: 0;
-    border: 0;
+    position: absolute;
+    inset: 0;
+    width: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
   }
 
   .report-sheet table {
-    font-size: 9.5px;
+    font-size: 12.5px;
   }
 
   .report-sheet table td,
   .report-sheet table th {
-    padding-top: 1px !important;
-    padding-bottom: 1px !important;
+    padding-top: 5px !important;
+    padding-bottom: 5px !important;
+  }
+
+  .report-sheet .report-field {
+    font-weight: 700 !important;
+  }
+
+  .report-sheet .report-heading {
+    color: #0b2545 !important;
   }
 
   .report-sheet tr,
   .report-sheet .keep {
     break-inside: avoid;
+  }
+
+  .report-sheet .report-chart-page {
+    break-before: page;
+    page-break-before: always;
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .report-sheet .report-chart {
+    width: 100%;
+    min-height: 170mm;
+  }
+
+  .report-sheet button[aria-label] {
+    display: none !important;
   }
 }
 

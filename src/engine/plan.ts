@@ -86,7 +86,7 @@ const CHARITY_WARNING = (capRatio: number, limit: number) =>
 const TAXABLE_WARNING = 'Deductions exceed income; taxable income set to $0.';
 
 export const DISCLAIMER =
-  'Estimates for planning purposes only. Not tax, legal or investment advice.';
+  'This material has been prepared for informational purposes only, and is not intended to provide, and should not be relied on for, tax, legal or financial advice.';
 
 export const MAX_OPTIONS = 3;
 

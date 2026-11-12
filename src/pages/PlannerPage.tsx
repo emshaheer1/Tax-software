@@ -17,6 +17,7 @@ import { formatMoney } from '../engine/format.ts';
 import {
   standardDeductionFor,
   calculatePlan,
+  displayName,
   optionFigures,
   suggestedLcdFigures,
   suggestedQuarterlyContribution,
@@ -25,7 +26,7 @@ import {
   type Plan,
   type PlanResult,
 } from '../engine/plan.ts';
-import { requestPrint } from '../state/print.ts';
+import { requestDownloadPdf, requestPrint } from '../state/print.ts';
 import { usePlans } from '../state/plans-context.tsx';
 import { useSettings } from '../state/settings-context.tsx';
 import { useToast } from '../components/Toast.tsx';
@@ -350,13 +351,7 @@ export function PlannerPage() {
             <Save size={14} aria-hidden="true" />
             Save plan
           </Button>
-          <Button
-            variant="secondary"
-            onClick={() => {
-              toast('Choose Save as PDF in the print dialog.');
-              requestPrint();
-            }}
-          >
+          <Button variant="secondary" onClick={() => requestDownloadPdf(displayName(current))}>
             <Download size={14} aria-hidden="true" />
             Download PDF
           </Button>

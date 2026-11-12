@@ -13,11 +13,13 @@ export function ResultCards({
   bestOptionId,
   planningFees = 0,
   compact = false,
+  paper = false,
 }: {
   options: ResolvedOption[];
   bestOptionId?: string;
   planningFees?: number;
   compact?: boolean;
+  paper?: boolean;
 }) {
   if (options.length === 0) return null;
 
@@ -36,12 +38,14 @@ export function ResultCards({
             key={option.id}
             className={cn(
               'keep rounded-[10px]',
-              compact ? 'border bg-surface p-3 shadow-none' : 'glass p-3.5',
-              best ? 'border-teal-600' : 'border-line',
+              paper || compact
+                ? 'border bg-white p-3.5 shadow-none'
+                : 'glass p-3.5',
+              best ? 'border-[#0f8b8d]' : paper || compact ? 'border-[#d7d2c8]' : 'border-line',
             )}
           >
             <div className="flex items-start justify-between gap-2">
-              <h3 className="min-w-0 text-sm font-medium text-ink">{option.name}</h3>
+              <h3 className="report-heading min-w-0 text-sm font-semibold text-ink">{option.name}</h3>
               {best ? <Badge>Best net</Badge> : null}
             </div>
             <p
@@ -53,24 +57,24 @@ export function ResultCards({
             >
               {formatMoney(option.net ?? null)}
             </p>
-            <p className="mt-1 text-xs text-ink-muted">Net amount</p>
+            <p className="report-field mt-1 text-xs font-semibold text-ink-muted">Net amount</p>
             <dl className={cn('space-y-1 border-t border-line text-sm', compact ? 'mt-2 pt-2' : 'mt-4 pt-3')}>
               <div className="flex items-baseline justify-between gap-3">
-                <dt className="text-xs text-ink-muted">Total saving</dt>
+                <dt className="report-field text-xs font-semibold text-ink-muted">Total saving</dt>
                 <dd className={cn('font-medium tabular-nums', tone(option.taxSavings))}>
                   {formatMoney(option.taxSavings ?? null)}
                 </dd>
               </div>
               <div className="flex items-baseline justify-between gap-3">
-                <dt className="text-xs text-ink-muted">Cash out</dt>
+                <dt className="report-field text-xs font-semibold text-ink-muted">Cash out</dt>
                 <dd className="font-medium text-ink tabular-nums">{formatMoney(option.cashOut ?? null)}</dd>
               </div>
               <div className="flex items-baseline justify-between gap-3">
-                <dt className="text-xs text-ink-muted">Planning fees</dt>
+                <dt className="report-field text-xs font-semibold text-ink-muted">Planning fees</dt>
                 <dd className="font-medium text-ink tabular-nums">{formatMoney(planningFees)}</dd>
               </div>
               <div className="flex items-baseline justify-between gap-3">
-                <dt className="text-xs text-ink-muted">ROI</dt>
+                <dt className="report-field text-xs font-semibold text-ink-muted">ROI</dt>
                 <dd className={cn('font-medium tabular-nums', tone(option.roi))}>{formatPercent(option.roi)}</dd>
               </div>
             </dl>

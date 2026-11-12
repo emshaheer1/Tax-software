@@ -252,7 +252,7 @@ export function ComparisonTable({
                     scope="colgroup"
                     colSpan={columnCount}
                     className={cn(
-                      'text-left font-semibold tracking-[0.14em] text-ink-muted uppercase',
+                      'report-heading text-left font-semibold tracking-[0.14em] text-ink-muted uppercase',
                       compact ? 'px-2 pt-3 pb-0.5 text-[10px]' : 'px-3 pt-5 pb-1 text-xs',
                     )}
                   >
@@ -267,7 +267,7 @@ export function ComparisonTable({
                 <th
                   scope="row"
                   className={cn(
-                    'sticky left-0 z-10 bg-sticky text-left font-normal whitespace-normal text-ink',
+                    'report-field sticky left-0 z-10 bg-sticky text-left font-semibold whitespace-normal text-ink',
                     compact ? 'px-2 py-1' : 'px-2.5 py-1.5',
                   )}
                 >
